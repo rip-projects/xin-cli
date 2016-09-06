@@ -4,6 +4,14 @@ const http = require('http');
 const fs = require('fs-promise');
 const path = require('path');
 const sprintf = require('sprintf-js').sprintf;
+const portfinder = require('portfinder');
+portfinder.basePort = 3000;
+
+const ERR_NOT_FOUND = (function() {
+  var err = new Error('Not found');
+  err.status = 404;
+  return err;
+})();
 
 var bowerJson;
 try {
@@ -53,6 +61,9 @@ function serveStatic(res, file, cached) {
 
   var type = 'text/html';
   switch (path.extname(file)) {
+    case '.ico':
+      type = 'image/x-icon';
+      break;
     case '.css':
       type = 'text/css';
       break;
@@ -95,8 +106,7 @@ function mwIndex(next) {
   return function(req, res) {
     if (req.method === 'GET') {
       if (req.url === '/') {
-        var file = path.join(__dirname, 'templates/index.html');
-        return serveStatic(res, file);
+        return serveStatic(res, path.join(__dirname, 'templates/index.html'));
       } else if (req.url === '/_docs') {
         res.writeHead(302, {
           Location: '/_docs/'
@@ -104,8 +114,7 @@ function mwIndex(next) {
         res.end();
         return Promise.resolve();
       } else if (req.url.startsWith('/_docs/')) {
-        var file = path.join(__dirname, 'templates/docs.html');
-        return serveStatic(res, file);
+        return serveStatic(res, path.join(__dirname, 'templates/docs.html'));
       }
     }
 
@@ -126,6 +135,16 @@ function mwLog(next) {
         var tStr = sprintf('%02d.%03d', dt.getSeconds(), dt.getMilliseconds());
         console.log('| %s [%s] %s %s', tStr, res.statusCode, req.method, req.url);
       });
+  };
+}
+
+function mwFavicon(next) {
+  return function(req, res) {
+    if (req.method === 'GET' && req.url === '/favicon.ico') {
+      return serveStatic(res, path.join(__dirname, 'favicon.ico'));
+    }
+
+    return next(req, res);
   };
 }
 
@@ -156,7 +175,7 @@ function mwApi(next) {
             case '/':
               return apiRoot();
             default:
-              throw notFoundErr;
+              throw ERR_NOT_FOUND;
           }
         })
         .then(function(body) {
@@ -199,19 +218,22 @@ function mwNoop() {
 
 const server = http.createServer(function(req, res) {
   mwLog(
+  mwFavicon(
   mwApi(
   mwIndex(
   mwDemo(
   mwBower(
     mwNoop()
-  )))))(req, res).then(function() {
-    if (res.finished) {
-      clearTimeout(t);
-    }
-  });
+  ))))))(req, res);
 });
 
-server.listen(8080, function() {
-  console.log('XIN_CLI_DEBUG = %s', DEBUG);
-  console.log('Listening at %s...', server.address().port);
+portfinder.getPort(function (err, port) {
+  if (err) {
+    console.error(err);
+    return;
+  }
+
+  server.listen(port, function() {
+    console.log('Listening at %s...', server.address().port);
+  });
 });
