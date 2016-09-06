@@ -1,0 +1,185 @@
+<link rel="import" href="../xin/xin-ajax.html">
+
+<style>
+doc-nav {
+  display: block;
+  width: 150px;
+}
+
+doc-nav .menu {
+  margin: 10px 0;
+  overflow: auto;
+  height: 100%;
+}
+
+doc-nav a {
+  display: block;
+  padding: 3px;
+  font-size: 12px;
+  /*text-transform: uppercase;*/
+}
+
+doc-nav .children a {
+  padding-left: 1em;
+}
+
+doc-nav a:hover {
+  background-color: #ffa;
+}
+
+doc-nav a.toggle-btn {
+  display: none;
+}
+
+
+@media screen and (max-device-width: 480px) {
+
+  body doc-nav {
+    position: fixed;
+    z-index: 999;
+    top: 0;
+    right: 0;
+    width: 43px;
+    height: 43px;
+    overflow: hidden;
+  }
+
+  body.doc-nav-visible doc-nav {
+    width: 100%;
+    height: 100%;
+  }
+
+  doc-nav a.toggle-btn {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 28px;
+    margin-top: 5px;
+    z-index: 999;
+  }
+
+  doc-nav a.toggle-btn .line {
+    border-bottom: 1px solid #4F8EF7;
+    margin-top: 6px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  body doc-nav #overlay {
+    position: fixed;
+    opacity: 0;
+    background-color: rgba(0,0,0,.8);
+    width: 100%;
+    height: 100%;
+    padding: 50px;
+    top: -100%;
+    box-sizing: border-box;
+    transition: opacity .5s;
+    overflow: hidden;
+  }
+
+  body.doc-nav-visible doc-nav #overlay.show {
+    opacity: 1;
+  }
+
+  body.doc-nav-visible doc-nav #overlay {
+    top: 0;
+  }
+
+  body.doc-nav-visible xin-pager {
+    -webkit-filter: blur(1px);
+  }
+
+  doc-nav a {
+    font-size: 20px;
+    font-weight: lighter;
+  }
+
+  doc-nav a:hover {
+    background-color: transparent;
+  }
+
+}
+</style>
+
+<template is="xin-template" for="doc-nav">
+  <xin-ajax url="/xin-cli-api/" on-response="dataArrived" on-error="dataErrorCaught"></xin-ajax>
+  <a href="#" class="toggle-btn" on-click="toggleClicked">
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </a>
+
+  <div id="overlay">
+    <div class="menu">
+      <a href="/" target="_self">Home</a>
+      <a href="/_docs/" on-click="linkClicked">Components</a>
+
+      <div class="children">
+        <template is="xin-repeat" items="[[components]]" as="component">
+        <a href="[[component.documentationUrl]]" on-click="linkClicked">[[component.name]]</a>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+
+  xin.Component({
+    is: 'doc-nav',
+
+    properties: {
+      name: String,
+      version: String,
+      components: {
+        type: Array,
+        value: function() {
+          return [];
+        },
+      },
+    },
+
+    toggleClicked: function(evt) {
+      evt.preventDefault();
+
+      this.setVisible(!document.body.classList.contains('doc-nav-visible'));
+    },
+
+    setVisible: function(visible) {
+      if (visible) {
+        document.body.classList.add('doc-nav-visible');
+        this.$.overlay.classList.add('show');
+      } else {
+        this.$.overlay.classList.remove('show');
+        setTimeout(function() {
+          document.body.classList.remove('doc-nav-visible');
+        }, 500);
+      }
+    },
+
+    linkClicked: function(evt) {
+      this.setVisible(false);
+    },
+
+    dataErrorCaught: function(evt, detail) {
+      console.error('error', detail);
+    },
+
+    dataArrived: function(evt, detail) {
+      document.body.classList.add('doc-nav-loaded');
+      this.set('name', detail.body.name);
+      this.set('version', detail.body.version);
+      this.set('components', detail.body.components || []);
+
+      if ('docShow' in window) {
+        docShow.focusing();
+      }
+    },
+  });
+})();
+</script>

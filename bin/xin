@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+const argv = require('minimist')(process.argv.slice(2));
+const path = require('path');
+const spawn = require('child_process').spawn;
+
+function serve() {
+  spawn('node', [path.join(__dirname, '../serve')], { stdio: 'inherit' });
+}
+
+function help() {
+  console.log('Usage:');
+  console.log('  xin <command>');
+  console.log('');
+  console.log('Commands:');
+  console.log('  serve Serve documentation and demo');
+  console.log('  help  This page');
+}
+
+switch (argv._[0]) {
+  case 'serve':
+    serve();
+    break;
+  default:
+    help();
+    break;
+}
+

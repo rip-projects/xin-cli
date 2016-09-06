@@ -1,0 +1,418 @@
+<style>
+doc-show #content {
+  box-sizing: border-box;
+  padding: 5px;
+}
+
+doc-show table,
+doc-show .block {
+  width: 100%;
+  background-color: #eeeeee;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+doc-show table *,
+doc-show .block * {
+  font-size: 13px;
+}
+
+doc-show table th,
+doc-show .block .header {
+  font-size: .8em;
+  font-weight: bold;
+}
+
+doc-show table .type,
+doc-show .block .type {
+  color: #66D9EF;
+}
+
+doc-show table .visibility,
+doc-show .block .visibility {
+  color: #529B2F;
+}
+
+doc-show table .identifier,
+doc-show .block .identifier {
+  color: #F92672;
+}
+</style>
+<link rel="import" href="../xin/view-behavior.html">
+<script src="./js/marked.js"></script>
+
+<template is="xin-template" for="doc-show">
+  <div id="content"></div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+
+  xin.Component({
+    is: 'doc-show',
+
+    behaviors: [xin.ViewBehavior],
+
+    focusing: function() {
+      if (!docNav.name || !this.parameters || !this.parameters.name) {
+        return;
+      }
+
+      var name = this.parameters.name;
+
+      Populator.fetch(name).then(function(populator) {
+        this.renderDoc(populator);
+      }.bind(this));
+    },
+
+    renderDoc: function(doc) {
+      var md = '# ' + doc.filename + '\n\n';
+
+      //console.log('renderb', doc.behaviors['xin.ViewBehavior']);
+
+      if (typeof doc.imports === 'object' && Object.keys(doc.imports).length) {
+        md += '### Imports\n\n';
+        Object.keys(doc.imports).forEach(function(importName) {
+          //var imp = doc.imports[importName];
+          md += '> ' + importName + '<br>\n';
+        });
+        md += '\n';
+      }
+
+      Object.keys(doc.behaviors).forEach(function(behaviorName) {
+        var behavior = doc.behaviors[behaviorName];
+
+        md += '## ' + behaviorName + '\n\n';
+        md += ((behavior.description || '').trim() ? behavior.description : '_no description_') + '\n\n';
+
+        if (behavior.extends.length) {
+          md += '#### Extends\n\n';
+          behavior.extends.forEach(function(behavior) {
+            md += '> ' + behavior + '<br>\n';
+          });
+          md += '\n\n';
+        }
+
+        md += appendProperties(behavior.properties);
+        md += appendMethods(behavior.methods);
+      });
+
+      Object.keys(doc.components).forEach(function(componentName) {
+        var component = doc.components[componentName];
+
+        md += '## ' + component.name + '\n\n';
+        md += (component.description.trim() ? component.description : '_no description_') + '\n\n';
+
+        md += '### API Reference\n\n';
+
+        if (component.behaviors.length) {
+          md += '#### Behaviors\n\n';
+          component.behaviors.forEach(function(behavior) {
+            md += '> ' + behavior + '<br>\n';
+          });
+          md += '\n\n';
+        }
+
+        md += appendProperties(component.properties);
+        md += appendMethods(component.methods);
+
+        if (component.demo.length) {
+          md += '### Demo\n\n';
+          component.demo.forEach(function(demo) {
+            md += '> <a href="' + demo.url + '" rel="demo" target="_self">' + (demo.title || demo.url) + '</a>\n\n';
+          });
+        }
+      });
+
+      this.$.content.innerHTML = marked(md);
+    },
+  });
+
+  function appendMethods(methods) {
+    var md = '';
+    if (Object.keys(methods).length) {
+      var privateMethods = [];
+      var publicMethods = [];
+
+      for(var i in methods) {
+        if (i[0] === '_') {
+          privateMethods.push(methods[i]);
+        } else {
+          publicMethods.push(methods[i]);
+        }
+      }
+
+      md += '#### Methods\n\n';
+      md += '<div class="block">\n';
+      if (publicMethods.length) {
+        publicMethods.forEach(function(method) {
+          md += '<div><span class="visibility">public</span> <span class="identifier">' + method.name + '</span><blockquote>' + method.signature + '</blockquote></div>\n';
+        });
+      }
+      if (privateMethods.length) {
+        privateMethods.forEach(function(method) {
+          md += '<div><span class="visibility">private</span> <span class="identifier">' + method.name + '</span><blockquote>' + method.signature + '</blockquote></div>\n';
+        });
+      }
+      md += '\n</div>\n\n';
+    }
+    return md;
+  }
+
+  function appendProperties(properties) {
+    var md = '';
+    if (Object.keys(properties).length) {
+      md += '#### Properties\n\n';
+      md += 'Name|Type|Value\n---|---|---\n';
+      for(var i in properties) {
+        var prop = properties[i];
+        md += '<span class="identifier">' + i + '</span> | <span class="type">' + prop.type.name + '</span> | ' + JSON.stringify(prop.value) + '\n';
+      }
+      md += '\n\n';
+    }
+    return md;
+  }
+
+  function Populator(name) {
+    this.name = name;
+    this.filename = name + '.html';
+    this.baseUrl = location.origin + '/bower_components/' + docNav.name + '/' + name + '.html';
+    this.dom = null;
+    this.imports = {};
+    this.components = {};
+    this.behaviors = {};
+  };
+
+  //Populator.requestor = document.createElement('xin-ajax');
+  Populator.cache = {};
+  Populator.request = function(options) {
+    if (!Populator.requestor) {
+      Populator.requestor = document.createElement('xin-ajax');
+    }
+    return Populator.requestor.request(options);
+  };
+  Populator.fetch = function(name) {
+    if (Populator.cache[name]) {
+      return Promise.resolve(Populator.cache[name]);
+    } else {
+      return (Populator.cache[name] = new Populator(name)).fetch();
+    }
+  };
+
+  Populator.prototype = {
+    fetch: function() {
+      var self = this;
+      return Populator.request({ url: this.baseUrl })
+        .then(function(xhr) {
+          var parser = new DOMParser();
+          self.dom = parser.parseFromString(xhr.body, 'text/html');
+        })
+        .then(this.populateComponents.bind(this))
+        .then(this.populateMeta.bind(this))
+        .then(function() {
+          return self;
+        });
+    },
+
+    populateMeta: function() {
+      var dom = this.dom;
+      var self = this;
+      var _populate = function(node) {
+        if (node.nodeType === Node.COMMENT_NODE) {
+          var nodeContent = node.textContent.trim();
+          if (nodeContent.startsWith('@component')) {
+            var compData;
+
+            nodeContent.split('\n').forEach(function(line) {
+              if (line.trim().startsWith('@')) {
+                var matches = line.trim().match(/^@([a-zA-Z]+)\s+(.*)$/);
+                switch (matches[1]) {
+                  case 'component':
+                    var name = matches[2];
+                    compData = self.components[name] =
+                      self.components[name] || new PComponent(name);
+                    break;
+                  case 'demo':
+                    if (compData) {
+                      var splitted = matches[2].split(/\s+/);
+                      compData.demo.push({
+                        url: splitted[0],
+                        title: splitted.slice(1).join(' '),
+                      });
+                    }
+                    break;
+                }
+              } else if (compData) {
+                compData.description += line + '\n';
+              }
+            });
+          }
+        } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName === 'LINK' && node.getAttribute('rel') === 'import') {
+          var url = new URL(node.getAttribute('href'), this.baseUrl);
+          var importVal = url.href.split('/bower_components/')[1];
+          this.imports[importVal] = importVal;
+        }
+      }.bind(this);
+      Array.prototype.forEach.call(dom.childNodes, _populate);
+      Array.prototype.forEach.call(dom.querySelector('head').childNodes, _populate);
+    },
+
+    populateComponents: function() {
+      var promise = Promise.resolve();
+      var self = this;
+      xin.Dom(this.dom).querySelectorAll('script').forEach(function(script$) {
+        promise = promise.then(function() {
+          var src = script$.getAttribute('src');
+          if (src) {
+            var scriptUrl = new URL(src, self.baseUrl);
+            return Populator.request({ url: scriptUrl.href })
+              .then(function(xhr) {
+                return xhr.body;
+              });
+          }
+
+          return script$.textContent;
+        }).then(self.populateFromScript.bind(self));
+      });
+      return promise;
+    },
+
+    populateFromScript: function(content) {
+      var self = this;
+      var originalXin = window.xin;
+
+      var xin = window.xin = {
+        Component: function(options) {
+          self.components[options.is] = new PComponent(options.is, options);
+        },
+        Behavior: function(name, behavior) {
+          self.behaviors[name] = new PBehavior(name, behavior);
+          return behavior;
+        },
+      };
+      Object.setPrototypeOf(xin, originalXin);
+
+      (function() {
+        try {
+          eval(content);
+        } catch(e) {
+          console.warn('Content:\n' + content.trim());
+          console.error(e.stack);
+        }
+      }.bind(window))();
+
+      window.xin = originalXin;
+    },
+  };
+
+  function PBehavior(name, options) {
+    this.name = name;
+    this.extends = [];
+    this.properties = {};
+    this.methods = {};
+    this.options = options;
+
+    this.flattenBehaviors(options).forEach(function(behavior) {
+      if (typeof behavior === 'string') {
+        this.extends.push(behavior);
+      } else {
+        var properties = populateProperties(behavior);
+        for(var i in properties) {
+          this.properties[i] = properties[i];
+        }
+
+        var methods = populateMethods(behavior);
+        for(var i in methods) {
+          this.methods[i] = methods[i];
+        }
+      }
+    }.bind(this));
+  };
+
+  PBehavior.prototype = {
+    flattenBehaviors: function(behavior) {
+      var result = [];
+      if (Array.isArray(behavior)) {
+        behavior.forEach(function(bhv) {
+          this.flattenBehaviors(bhv).forEach(function(bhv) {
+            if (bhv) {
+              result.push(bhv);
+            }
+          });
+        }.bind(this));
+      } else if (behavior) {
+        result.push(behavior);
+      }
+      return result;
+    }
+  };
+
+  function populateProperties(options) {
+    if (!options || !options.properties) return {};
+
+    var result = {};
+    for(var i in options.properties) {
+      var prop = result[i] = {
+        name: i,
+      };
+
+      var val = options.properties[i];
+      switch (val) {
+        case String:
+        case Object:
+        case Number:
+        case Array:
+        case Boolean:
+          prop.type = val;
+          prop.value = null;
+          break;
+        default:
+          prop.type = val.type;
+          prop.value = val.value || null;
+          break;
+      }
+    }
+
+    return result;
+  };
+
+  function populateMethods(options) {
+    var result = {};
+    for(var i in options) {
+      if (typeof options[i] !== 'function' || i === 'created' || i === 'ready' || i === 'attached') {
+        continue;
+      }
+      result[i] = {
+        name: i,
+        signature: options[i].toString().split('{')[0].trim(),
+      };
+    }
+    return result;
+  }
+
+  function PComponent(name, options) {
+    this.name = name;
+    this.description = '';
+    this.demo = [];
+    this.options = options;
+    this.properties = populateProperties(options);
+    this.behaviors = [];
+    this.methods = populateMethods(options);
+
+    (options.behaviors || []).forEach(function _populateBehavior(behavior) {
+      if (behavior.__name) {
+        this.behaviors.push(behavior.__name);
+      } else if (Array.isArray(behavior)) {
+        behavior.forEach(_populateBehavior.bind(this));
+      } else {
+        this.behaviors.push(behavior);
+      }
+    }.bind(this));
+
+
+  };
+})();
+</script>
+
