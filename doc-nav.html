@@ -156,8 +156,7 @@ doc-nav a.toggle-btn {
         this.$.overlay.classList.add('show');
       } else {
         this.$.overlay.classList.remove('show');
-        this.async({})
-        setTimeout(function() {
+        this.async(function() {
           document.body.classList.remove('doc-nav-visible');
         }, 500);
       }
