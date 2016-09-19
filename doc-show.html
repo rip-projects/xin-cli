@@ -1,3 +1,10 @@
+<link rel="import" href="../xin/view-behavior.html">
+
+<script src="./js/marked.js"></script>
+<script src="./js/prism.min.js"></script>
+
+<link rel="stylesheet" href="./css/prism.min.css">
+
 <style>
 doc-show #content {
   box-sizing: border-box;
@@ -38,9 +45,13 @@ doc-show table .identifier,
 doc-show .block .identifier {
   color: #F92672;
 }
+
+doc-show pre {
+  background-color: #eee;
+  padding: 20px;
+  overflow: auto;
+}
 </style>
-<link rel="import" href="../xin/view-behavior.html">
-<script src="./js/marked.js"></script>
 
 <template is="xin-template" for="doc-show">
   <div id="content"></div>
@@ -50,10 +61,17 @@ doc-show .block .identifier {
 (function() {
   'use strict';
 
-  xin.Component({
+  marked.setOptions({
+    highlight: function (code, language) {
+      //console.log(code, language);
+      return Prism.highlight(code, Prism.languages[language]);
+    }
+  });
+
+  xin.createComponent({
     is: 'doc-show',
 
-    behaviors: [xin.ViewBehavior],
+    behaviors: ['xin.ViewBehavior'],
 
     focusing: function() {
       if (!docNav.name || !this.parameters || !this.parameters.name) {
@@ -69,8 +87,6 @@ doc-show .block .identifier {
 
     renderDoc: function(doc) {
       var md = '# ' + doc.filename + '\n\n';
-
-      //console.log('renderb', doc.behaviors['xin.ViewBehavior']);
 
       if (typeof doc.imports === 'object' && Object.keys(doc.imports).length) {
         md += '### Imports\n\n';
@@ -97,6 +113,7 @@ doc-show .block .identifier {
 
         md += appendProperties(behavior.properties);
         md += appendMethods(behavior.methods);
+        md += appendDemos(behavior.demo);
       });
 
       Object.keys(doc.components).forEach(function(componentName) {
@@ -117,18 +134,31 @@ doc-show .block .identifier {
 
         md += appendProperties(component.properties);
         md += appendMethods(component.methods);
+        md += appendDemos(component.demo);
+      });
 
-        if (component.demo.length) {
-          md += '### Demo\n\n';
-          component.demo.forEach(function(demo) {
-            md += '> <a href="' + demo.url + '" rel="demo" target="_self">' + (demo.title || demo.url) + '</a>\n\n';
-          });
-        }
+      Object.keys(doc.libraries).forEach(function(libraryName) {
+        var library = doc.libraries[libraryName];
+
+        md += '## ' + libraryName + '\n\n';
+        md += ((library.description || '').trim() ? library.description : '_no description_') + '\n\n';
+        md += appendDemos(library.demo);
       });
 
       this.$.content.innerHTML = marked(md);
     },
   });
+
+  function appendDemos(demos) {
+    var md = '';
+    if (demos.length) {
+      md += '### Demo\n\n';
+      demos.forEach(function(demo) {
+        md += '> <a href="' + demo.url + '" rel="demo" target="_self">' + (demo.title || demo.url) + '</a>\n\n';
+      });
+    }
+    return md;
+  }
 
   function appendMethods(methods) {
     var md = '';
@@ -183,6 +213,7 @@ doc-show .block .identifier {
     this.imports = {};
     this.components = {};
     this.behaviors = {};
+    this.libraries = {};
   };
 
   //Populator.requestor = document.createElement('xin-ajax');
@@ -222,7 +253,11 @@ doc-show .block .identifier {
       var _populate = function(node) {
         if (node.nodeType === Node.COMMENT_NODE) {
           var nodeContent = node.textContent.trim();
-          if (nodeContent.startsWith('@component')) {
+          var willParse = (nodeContent.startsWith('@component') ||
+              nodeContent.startsWith('@library') ||
+              nodeContent.startsWith('@behavior'));
+
+          if (willParse) {
             var compData;
 
             nodeContent.split('\n').forEach(function(line) {
@@ -233,6 +268,16 @@ doc-show .block .identifier {
                     var name = matches[2];
                     compData = self.components[name] =
                       self.components[name] || new PComponent(name);
+                    break;
+                  case 'behavior':
+                    var name = matches[2];
+                    compData = self.behaviors[name] =
+                      self.behaviors[name] || new PBehavior(name);
+                    break;
+                  case 'library':
+                    var name = matches[2];
+                    compData = self.libraries[name] =
+                      self.libraries[name] || new PLibrary(name);
                     break;
                   case 'demo':
                     if (compData) {
@@ -262,6 +307,29 @@ doc-show .block .identifier {
     populateComponents: function() {
       var promise = Promise.resolve();
       var self = this;
+
+      var originalXin = window.xin;
+      var originalRegisterElement = window.document.registerElement;
+
+      var xin = window.xin = {
+        createComponent: function(options) {
+          self.components[options.is] = new PComponent(options.is, options);
+        },
+        Component: function(options) {
+          self.components[options.is] = new PComponent(options.is, options);
+        },
+        createBehavior: function(name, behavior) {
+          self.behaviors[name] = new PBehavior(name, behavior);
+          return behavior;
+        },
+        Behavior: function(name, behavior) {
+          self.behaviors[name] = new PBehavior(name, behavior);
+          return behavior;
+        },
+      };
+      window.document.registerElement = function() {};
+
+      Object.setPrototypeOf(xin, originalXin);
       xin.Dom(this.dom).querySelectorAll('script').forEach(function(script$) {
         promise = promise.then(function() {
           var src = script$.getAttribute('src');
@@ -274,26 +342,18 @@ doc-show .block .identifier {
           }
 
           return script$.textContent;
-        }).then(self.populateFromScript.bind(self));
+        })
+        .then(self.populateFromScript.bind(self));
       });
-      return promise;
+
+      return promise.then(function() {
+          window.xin = originalXin;
+          window.document.registerElement = originalRegisterElement;
+        });
     },
 
     populateFromScript: function(content) {
       var self = this;
-      var originalXin = window.xin;
-
-      var xin = window.xin = {
-        Component: function(options) {
-          self.components[options.is] = new PComponent(options.is, options);
-        },
-        Behavior: function(name, behavior) {
-          self.behaviors[name] = new PBehavior(name, behavior);
-          return behavior;
-        },
-      };
-      Object.setPrototypeOf(xin, originalXin);
-
       (function() {
         try {
           eval(content);
@@ -303,7 +363,6 @@ doc-show .block .identifier {
         }
       }.bind(window))();
 
-      window.xin = originalXin;
     },
   };
 
@@ -312,6 +371,7 @@ doc-show .block .identifier {
     this.extends = [];
     this.properties = {};
     this.methods = {};
+    this.demo = [];
     this.options = options;
 
     this.flattenBehaviors(options).forEach(function(behavior) {
@@ -396,12 +456,12 @@ doc-show .block .identifier {
     this.name = name;
     this.description = '';
     this.demo = [];
-    this.options = options;
-    this.properties = populateProperties(options);
+    this.options = options || {};
+    this.properties = populateProperties(this.options);
     this.behaviors = [];
-    this.methods = populateMethods(options);
+    this.methods = populateMethods(this.options);
 
-    (options.behaviors || []).forEach(function _populateBehavior(behavior) {
+    (this.options.behaviors || []).forEach(function _populateBehavior(behavior) {
       if (behavior.__name) {
         this.behaviors.push(behavior.__name);
       } else if (Array.isArray(behavior)) {
@@ -410,9 +470,12 @@ doc-show .block .identifier {
         this.behaviors.push(behavior);
       }
     }.bind(this));
+  }
 
-
-  };
+  function PLibrary(name, options) {
+    this.name = name;
+    this.description = '';
+    this.demo = [];
+  }
 })();
 </script>
-

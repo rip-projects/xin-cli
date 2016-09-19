@@ -115,7 +115,7 @@ doc-nav a.toggle-btn {
   <div id="overlay">
     <div class="menu">
       <a href="/" target="_self">Home</a>
-      <a href="/_docs/" on-click="linkClicked">Components</a>
+      <a href="/cdocs/" on-click="linkClicked">Components</a>
 
       <div class="children">
         <template is="xin-repeat" items="[[components]]" as="component">
@@ -130,7 +130,7 @@ doc-nav a.toggle-btn {
 (function() {
   'use strict';
 
-  xin.Component({
+  xin.createComponent({
     is: 'doc-nav',
 
     properties: {
@@ -156,6 +156,7 @@ doc-nav a.toggle-btn {
         this.$.overlay.classList.add('show');
       } else {
         this.$.overlay.classList.remove('show');
+        this.async({})
         setTimeout(function() {
           document.body.classList.remove('doc-nav-visible');
         }, 500);

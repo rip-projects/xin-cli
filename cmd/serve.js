@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs-promise');
 const path = require('path');
 const sprintf = require('sprintf-js').sprintf;
+const browserSync = require('browser-sync');
 const portfinder = require('portfinder');
 portfinder.basePort = 3000;
 
@@ -16,12 +17,12 @@ const ERR_NOT_FOUND = (function() {
 var bowerJson;
 try {
   bowerJson = require(path.resolve('bower.json'));
-} catch(e) {
+} catch (e) {
   console.error('bower.json not found');
   return;
 }
 
-const DEBUG = process.env.XIN_CLI_DEBUG ? true : false;
+const DEBUG = Boolean(process.env.XIN_CLI_DEBUG);
 
 function apiRoot() {
   return fs.readdir('./').then(function(files) {
@@ -36,7 +37,7 @@ function apiRoot() {
         var name = path.basename(file, '.html');
         var component = {
           name: name,
-          documentationUrl: '/_docs/' + name,
+          documentationUrl: '/cdocs/' + name,
         };
         return components.push(component);
       }
@@ -106,15 +107,15 @@ function mwIndex(next) {
   return function(req, res) {
     if (req.method === 'GET') {
       if (req.url === '/') {
-        return serveStatic(res, path.join(__dirname, 'templates/index.html'));
-      } else if (req.url === '/_docs') {
+        return serveStatic(res, path.join(__dirname, '../templates/index.html'));
+      } else if (req.url === '/cdocs') {
         res.writeHead(302, {
-          Location: '/_docs/'
+          Location: '/cdocs/',
         });
         res.end();
         return Promise.resolve();
-      } else if (req.url.startsWith('/_docs/')) {
-        return serveStatic(res, path.join(__dirname, 'templates/docs.html'));
+      } else if (req.url.startsWith('/cdocs/')) {
+        return serveStatic(res, path.join(__dirname, '../templates/docs.html'));
       }
     }
 
@@ -141,7 +142,28 @@ function mwLog(next) {
 function mwFavicon(next) {
   return function(req, res) {
     if (req.method === 'GET' && req.url === '/favicon.ico') {
-      return serveStatic(res, path.join(__dirname, 'favicon.ico'));
+      return serveStatic(res, path.join(__dirname, '../favicon.ico'));
+    }
+
+    return next(req, res);
+  };
+}
+
+function mwOtherFiles(next) {
+  return function(req, res) {
+    if (req.method === 'GET') {
+      var file;
+      if (req.url === '/') {
+        file = './index.html';
+      } else {
+        file = '.' + req.url;
+      }
+      return fs.exists(file).then(function(exist) {
+        if (exist) {
+          return serveStatic(res, file);
+        }
+        return next(req, res);
+      });
     }
 
     return next(req, res);
@@ -153,7 +175,7 @@ function mwBower(next) {
     if (req.method === 'GET' && req.url.startsWith('/bower_components/')) {
       var file = path.join('.', req.url);
       if (req.url.startsWith('/bower_components/xin-cli/')) {
-        file = path.join(__dirname, req.url.substr(25));
+        file = path.join(__dirname, '..', req.url.substr(25));
       } else if (req.url.startsWith('/bower_components/' + bowerJson.name + '/')) {
         file = req.url.substr(19 + bowerJson.name.length);
       }
@@ -171,7 +193,7 @@ function mwApi(next) {
 
       return Promise.resolve()
         .then(function() {
-          switch(apiUrl) {
+          switch (apiUrl) {
             case '/':
               return apiRoot();
             default:
@@ -190,7 +212,7 @@ function mwApi(next) {
             'Content-Type': 'application/json',
           });
           res.write(JSON.stringify({
-            message: err.message
+            message: err.message,
           }));
           res.end();
         });
@@ -211,29 +233,55 @@ function mwDemo(next) {
 }
 
 function mwNoop() {
-  return function(){
+  return function() {
     return Promise.resolve();
   };
 }
 
-const server = http.createServer(function(req, res) {
-  mwLog(
-  mwFavicon(
-  mwApi(
-  mwIndex(
-  mwDemo(
-  mwBower(
-    mwNoop()
-  ))))))(req, res);
-});
+module.exports = {
+  run() {
+    const server = http.createServer(function(req, res) {
+      mwLog(
+        mwOtherFiles(
+          mwFavicon(
+            mwBower(
+              mwIndex(
+                mwDemo(
+                  mwApi(
+                    mwNoop()
+                )))))))(req, res);
+    });
 
-portfinder.getPort(function (err, port) {
-  if (err) {
-    console.error(err);
-    return;
-  }
+    return new Promise(function(resolve, reject) {
+      portfinder.getPort(function(err, port) {
+        if (err) {
+          console.error(err);
+          return;
+        }
 
-  server.listen(port, function() {
-    console.log('Listening at %s...', server.address().port);
-  });
-});
+        server.listen(port, function() {
+          var bs = browserSync.create();
+          bs.init({
+            online: false,
+            open: false,
+            // port: 3007,
+            proxy: {
+              target: 'localhost:' + server.address().port, // original port
+              ws: true, // enables websockets
+            },
+          });
+          bs.watch('**/*.html').on('change', bs.reload);
+          // Provide a callback to capture ALL events to CSS
+          // files - then filter for 'change' and reload all
+          // css files on the page.
+          bs.watch('**/*.css', function(event, file) {
+            if (event === 'change') {
+              bs.reload('*.css');
+            }
+          });
+          // console.log('Listening at %s...', server.address().port);
+        });
+      });
+    });
+  },
+};
