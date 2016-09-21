@@ -11,7 +11,13 @@
     "portfinder": "^1.0.7",
     "sprintf-js": "^1.0.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^3.5.0",
+    "eslint-config-standard": "^6.0.1",
+    "eslint-plugin-html": "^1.5.2",
+    "eslint-plugin-promise": "^2.0.1",
+    "eslint-plugin-standard": "^2.0.0"
+  },
   "scripts": {
     "test": "eslint --ext .js,.html .",
     "postinstall": "bower install"
@@ -20,12 +26,5 @@
     "xin": "./bin/xin.js"
   },
   "author": "Ganesha <reekoheek@gmail.com>",
-  "license": "MIT",
-  "devDependencies": {
-    "eslint": "^3.5.0",
-    "eslint-config-standard": "^6.0.1",
-    "eslint-plugin-html": "^1.5.2",
-    "eslint-plugin-promise": "^2.0.1",
-    "eslint-plugin-standard": "^2.0.0"
-  }
+  "license": "MIT"
 }
