@@ -1,0 +1,54 @@
+{
+  "name": "xin-cli",
+  "description": "CLI for xin (version 2) development",
+  "authors": [
+    "Ganesha <reekoheek@gmail.com>"
+  ],
+  "license": "MIT",
+  "homepage": "https://xin-cli.xinix-technology.github.io",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "xin": "xinix-technology/xin#ver-2.x"
+  },
+  "xin": {
+    "modules": [
+      {
+        "name": "xin-cli",
+        "file": "xin-cli.html"
+      },
+      {
+        "name": "doc-home",
+        "file": "doc-home.html"
+      },
+      {
+        "name": "doc-nav",
+        "file": "doc-nav.html"
+      },
+      {
+        "name": "doc-page",
+        "file": "doc-page.html"
+      },
+      {
+        "name": "doc-show",
+        "file": "doc-show.html"
+      },
+      {
+        "name": "markdown-behavior",
+        "file": "markdown-behavior.html"
+      }
+    ],
+    "pages": [
+      {
+        "name": "getting-started",
+        "title": "Getting Started",
+        "file": "getting-started.md"
+      }
+    ]
+  }
+}

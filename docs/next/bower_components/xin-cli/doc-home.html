@@ -1,0 +1,149 @@
+<link rel="import" href="../xin/view-behavior.html">
+<link rel="import" href="./markdown-behavior.html">
+
+<style>
+.doc-home table,
+.doc-home .block {
+  width: 100%;
+  background-color: #eeeeee;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.doc-home table *,
+.doc-home .block * {
+  font-size: 13px;
+}
+
+.doc-home table th,
+.doc-home .block .header {
+  font-size: .8em;
+  font-weight: bold;
+}
+
+.doc-home table .type,
+.doc-home .block .type {
+  color: #66D9EF;
+}
+
+.doc-home table .visibility,
+.doc-home .block .visibility {
+  color: #529B2F;
+}
+
+.doc-home table .identifier,
+.doc-home .block .identifier {
+  color: #F92672;
+}
+
+.doc-home pre {
+  background-color: #eee;
+  padding: 20px;
+  overflow: auto;
+}
+
+.doc-home ul {
+  padding: 0 20px;
+}
+</style>
+<template is="xin-template" for="doc-home">
+  <div id="content">
+    <h1><span>[[metadata.name]]</span> Documentation</h1>
+
+    <p>[[metadata.description]]</p>
+
+    <table>
+      <tr>
+        <td>License</td>
+        <td>[[metadata.license]]</td>
+      </tr>
+      <tr>
+        <td>Homepage</td>
+        <td>[[metadata.homepage]]</td>
+      </tr>
+    </table>
+
+    <h3>Dependencies</h3>
+    <blockquote>
+      <template is="xin-repeat" items="[[dependencies]]" as="dependency">
+        <div>
+          <span>[[dependency.name]]</span> &lt;-
+          <span>[[dependency.url]]</span>
+        </div>
+      </template>
+    </blockquote>
+
+    <br>
+
+    <div class="layout horizontal">
+      <div class="flex">
+        <h2>Pages</h2>
+
+        <ul>
+          <template is="xin-repeat" items="[[metadata.xin.pages]]">
+            <li>
+              <a href="[[_computePageUrl(item)]]">[[item.title]]</a>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <div class="flex">
+        <h2>Modules</h2>
+
+        <ul>
+          <template is="xin-repeat" items="[[metadata.xin.modules]]">
+            <li>
+              <a href="[[_computeModuleUrl(item)]]">[[item.name]]</a>
+            </li>
+          </template>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+
+  xin.createComponent({
+    is: 'doc-home',
+
+    behaviors: ['xin.ViewBehavior'],
+
+    properties: {
+      metadata: {
+        type: Object,
+        observer: '_fetchData',
+      },
+
+      dependencies: {
+        type: Array,
+      }
+    },
+
+    _computeModuleUrl: function(module) {
+      return '#!/modules/' + module.name;
+    },
+
+    _computePageUrl: function(page) {
+      return '#!/pages/' + page.name;
+    },
+
+    _fetchData: function() {
+      var dependencies = [];
+      var deps = this.metadata.dependencies;
+      Object.keys(deps).forEach(function(k) {
+        dependencies.push({
+          name: k,
+          url: deps[k],
+        });
+      });
+
+      this.set('dependencies', dependencies);
+    },
+  });
+})();
+</script>

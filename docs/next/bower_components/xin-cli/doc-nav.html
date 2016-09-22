@@ -1,0 +1,210 @@
+<link rel="import" href="../xin/xin-ajax.html">
+
+<style>
+doc-nav {
+  display: block;
+  width: 200px;
+  background-color: #eee;
+  overflow: auto;
+}
+
+doc-nav .menu {
+  margin: 10px 0;
+  overflow: auto;
+  height: 100%;
+  padding: 10px;
+}
+
+doc-nav a {
+  display: block;
+  padding: 3px;
+  font-size: 12px;
+  /*text-transform: uppercase;*/
+}
+
+doc-nav .children a {
+  padding-left: 1em;
+}
+
+doc-nav a:hover,
+doc-nav .selected {
+  background-color: #ffa;
+}
+
+doc-nav a.toggle-btn {
+  display: none;
+}
+
+
+@media screen and (max-device-width: 480px) {
+
+  body doc-nav {
+    position: fixed;
+    z-index: 999;
+    top: 0;
+    right: 0;
+    width: 43px;
+    height: 43px;
+    overflow: hidden;
+  }
+
+  body.doc-nav-visible doc-nav {
+    width: 100%;
+    height: 100%;
+  }
+
+  doc-nav a.toggle-btn {
+    display: block;
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 40px;
+    height: 28px;
+    margin-top: 5px;
+    z-index: 999;
+  }
+
+  doc-nav a.toggle-btn .line {
+    border-bottom: 1px solid #4F8EF7;
+    margin-top: 6px;
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+
+  body doc-nav #overlay {
+    position: fixed;
+    opacity: 0;
+    background-color: rgba(0,0,0,.8);
+    width: 100%;
+    height: 100%;
+    padding: 50px;
+    top: -100%;
+    box-sizing: border-box;
+    transition: opacity .5s;
+    overflow: hidden;
+  }
+
+  body.doc-nav-visible doc-nav #overlay.show {
+    opacity: 1;
+  }
+
+  body.doc-nav-visible doc-nav #overlay {
+    top: 0;
+  }
+
+  body.doc-nav-visible xin-pager {
+    -webkit-filter: blur(1px);
+  }
+
+  doc-nav a {
+    font-size: 20px;
+    font-weight: lighter;
+  }
+
+  doc-nav a:hover {
+    background-color: transparent;
+  }
+
+}
+</style>
+
+<template is="xin-template" for="doc-nav">
+  <xin-ajax url="./metadata.json" on-response="dataArrived" on-error="dataErrorCaught"></xin-ajax>
+  <a href="#" class="toggle-btn" on-click="toggleClicked">
+    <div class="line"></div>
+    <div class="line"></div>
+    <div class="line"></div>
+  </a>
+
+  <div id="overlay">
+    <div class="menu">
+      <a href="#!/" on-click="linkClicked">Home</a>
+
+      <template is="xin-repeat" items="[[metadata.xin.pages]]" as="page">
+        <a href="[[_computePageUrl(page)]]" on-click="linkClicked">[[page.title]]</a>
+      </template>
+
+      <a href="#!/modules/index" on-click="linkClicked">Modules</a>
+      <div class="children">
+        <template is="xin-repeat" items="[[metadata.xin.modules]]" as="module">
+          <a href="[[_computeModuleUrl(module)]]" on-click="linkClicked">[[module.name]]</a>
+        </template>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+
+  xin.createComponent({
+    is: 'doc-nav',
+
+    properties: {
+      metadata: {
+        type: Object,
+        notify: true,
+      },
+    },
+
+    attached: function() {
+      this.__app.addEventListener('navigated', function() {
+        this.async(function() {
+          xin.dom(this).querySelectorAll('a:not(.toggle-btn)').forEach(function(el) {
+            if (el.href === location.href) {
+              el.classList.add('selected');
+            } else {
+              el.classList.remove('selected');
+            }
+          });
+        }, 300);
+      }.bind(this));
+    },
+
+    _computeModuleUrl: function(module) {
+      if (module) {
+        return `#!/modules/${module.name}`;
+      }
+    },
+
+    _computePageUrl: function(page) {
+      if (page) {
+        return `#!/pages/${page.name}`;
+      }
+    },
+
+    toggleClicked: function(evt) {
+      evt.preventDefault();
+
+      this.setVisible(!document.body.classList.contains('doc-nav-visible'));
+    },
+
+    setVisible: function(visible) {
+      if (visible) {
+        document.body.classList.add('doc-nav-visible');
+        this.$.overlay.classList.add('show');
+      } else {
+        this.$.overlay.classList.remove('show');
+        this.async(function() {
+          document.body.classList.remove('doc-nav-visible');
+        }, 500);
+      }
+    },
+
+    linkClicked: function(evt) {
+      this.setVisible(false);
+    },
+
+    dataErrorCaught: function(evt, detail) {
+      console.error('error', detail);
+    },
+
+    dataArrived: function(evt, detail) {
+      document.body.classList.add('doc-nav-loaded');
+
+      this.set('metadata', detail.body);
+    },
+  });
+})();
+</script>

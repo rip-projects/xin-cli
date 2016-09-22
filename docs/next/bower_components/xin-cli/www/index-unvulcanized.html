@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+  <title>Documentation</title>
+
+  <style>
+  body {
+    opacity: 0;
+  }
+
+  body.doc-nav-loaded {
+    opacity: 1;
+  }
+  </style>
+
+  <script>
+    window.xinOptions = {
+      'xin.ViewBehavior': {
+        transition: 'none',
+      },
+      // debug: true,
+    };
+  </script>
+  <script src="./bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+
+  <link rel="import" href="./bower_components/xin/xin-layout.html">
+  <link rel="import" href="./bower_components/xin/xin-app.html">
+  <link rel="import" href="./bower_components/xin/xin-pager.html">
+  <link rel="import" href="./bower_components/xin/xin-view.html">
+
+  <link rel="import" href="./bower_components/xin-cli/xin-cli.html">
+</head>
+<body>
+  <xin-app id="app">
+    <template>
+      <div class="wrapper">
+        <doc-nav id="docNav" metadata="{{metadata}}"></doc-nav>
+        <xin-pager class="flex">
+          <doc-home uri="/" metadata="{{metadata}}"></doc-home>
+          <doc-page uri="/pages/{name}" metadata="{{metadata}}"></doc-page>
+          <doc-show uri="/modules/{name}" metadata="{{metadata}}"></doc-show>
+        </xin-pager>
+      </div>
+    </template>
+  </xin-app>
+</body>
+</html>
