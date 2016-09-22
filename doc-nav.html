@@ -105,7 +105,7 @@ doc-nav a.toggle-btn {
 </style>
 
 <template is="xin-template" for="doc-nav">
-  <xin-ajax url="/xin-cli-api/" on-response="dataArrived" on-error="dataErrorCaught"></xin-ajax>
+  <xin-ajax url="/metadata.json" on-response="dataArrived" on-error="dataErrorCaught"></xin-ajax>
   <a href="#" class="toggle-btn" on-click="toggleClicked">
     <div class="line"></div>
     <div class="line"></div>
@@ -114,12 +114,16 @@ doc-nav a.toggle-btn {
 
   <div id="overlay">
     <div class="menu">
-      <a href="/" target="_self">Home</a>
-      <a href="/cdocs/" on-click="linkClicked">Components</a>
+      <a href="#!/" on-click="linkClicked">Home</a>
 
+      <template is="xin-repeat" items="[[metadata.xin.pages]]" as="page">
+        <a href="[[_computePageUrl(page)]]" on-click="linkClicked">[[page.title]]</a>
+      </template>
+
+      <a href="#!/modules/index" on-click="linkClicked">Modules</a>
       <div class="children">
-        <template is="xin-repeat" items="[[components]]" as="component">
-        <a href="[[component.documentationUrl]]" on-click="linkClicked">[[component.name]]</a>
+        <template is="xin-repeat" items="[[metadata.xin.modules]]" as="module">
+          <a href="[[_computeModuleUrl(module)]]" on-click="linkClicked">[[module.name]]</a>
         </template>
       </div>
     </div>
@@ -134,14 +138,22 @@ doc-nav a.toggle-btn {
     is: 'doc-nav',
 
     properties: {
-      name: String,
-      version: String,
-      components: {
-        type: Array,
-        value: function() {
-          return [];
-        },
+      metadata: {
+        type: Object,
+        notify: true,
       },
+    },
+
+    _computeModuleUrl: function(module) {
+      if (module) {
+        return `#!/modules/${module.name}`;
+      }
+    },
+
+    _computePageUrl: function(page) {
+      if (page) {
+        return `#!/pages/${page.name}`;
+      }
     },
 
     toggleClicked: function(evt) {
@@ -172,13 +184,8 @@ doc-nav a.toggle-btn {
 
     dataArrived: function(evt, detail) {
       document.body.classList.add('doc-nav-loaded');
-      this.set('name', detail.body.name);
-      this.set('version', detail.body.version);
-      this.set('components', detail.body.components || []);
 
-      if ('docShow' in window) {
-        docShow.focusing();
-      }
+      this.set('metadata', detail.body);
     },
   });
 })();

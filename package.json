@@ -4,9 +4,12 @@
   "description": "CLI for xin (version 2) development",
   "main": "serve.js",
   "dependencies": {
+    "bluebird": "^3.4.6",
     "bower": "^1.7.9",
     "browser-sync": "^2.15.0",
     "fs-promise": "^0.5.0",
+    "koa": "^1.2.4",
+    "koa-static": "^2.0.0",
     "minimist": "^1.2.0",
     "portfinder": "^1.0.7",
     "sprintf-js": "^1.0.3"
@@ -20,6 +23,7 @@
   },
   "scripts": {
     "test": "eslint --ext .js,.html .",
+    "watch": "nodemon -i _docs bin/xin.js",
     "postinstall": "bower install"
   },
   "bin": {

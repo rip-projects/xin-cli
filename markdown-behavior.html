@@ -1,0 +1,102 @@
+<link rel="import" href="../xin/xin.html">
+
+<script src="./js/marked.js"></script>
+<script src="./js/prism.min.js"></script>
+
+<link rel="stylesheet" href="./css/prism.min.css">
+
+<style>
+.xin-cli-markdown-behavior #content {
+  box-sizing: border-box;
+  padding: 5px;
+}
+
+.xin-cli-markdown-behavior table,
+.xin-cli-markdown-behavior .block {
+  width: 100%;
+  background-color: #eeeeee;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.xin-cli-markdown-behavior table *,
+.xin-cli-markdown-behavior .block * {
+  font-size: 13px;
+}
+
+.xin-cli-markdown-behavior table th,
+.xin-cli-markdown-behavior .block .header {
+  font-size: .8em;
+  font-weight: bold;
+}
+
+.xin-cli-markdown-behavior table .type,
+.xin-cli-markdown-behavior .block .type {
+  color: #66D9EF;
+}
+
+.xin-cli-markdown-behavior table .visibility,
+.xin-cli-markdown-behavior .block .visibility {
+  color: #529B2F;
+}
+
+.xin-cli-markdown-behavior table .identifier,
+.xin-cli-markdown-behavior .block .identifier {
+  color: #F92672;
+}
+
+.xin-cli-markdown-behavior pre {
+  background-color: #eee;
+  padding: 20px;
+  overflow: auto;
+}
+</style>
+
+<script>
+(function() {
+  'use strict';
+
+  const marked = window.marked;
+  const Prism = window.Prism;
+
+  marked.setOptions({
+    highlight: function(code, language) {
+      return Prism.highlight(code, Prism.languages[language]);
+    },
+  });
+
+  xin.createBehavior('xinCli.MarkdownBehavior', {
+    properties: {
+      markdownUrl: {
+        type: String,
+        observer: '_fetchMarkdown',
+      },
+
+      markdown: {
+        type: String,
+        observer: 'renderMarkdown',
+      },
+    },
+
+    created: function() {
+      this.classList.add('xin-cli-markdown-behavior');
+    },
+
+    _fetchMarkdown: function() {
+      if (!this.requestor) {
+        this.requestor = document.createElement('xin-ajax');
+      }
+      this.requestor.request({
+        url: this.markdownUrl,
+      }).then(function(xhr) {
+        this.set('markdown', xhr.body);
+      }.bind(this));
+    },
+
+    renderMarkdown: function() {
+      (this.$.content || this).innerHTML = marked(this.markdown);
+    },
+  });
+})();
+</script>

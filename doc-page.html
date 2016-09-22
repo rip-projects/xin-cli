@@ -1,0 +1,38 @@
+<link rel="import" href="../xin/view-behavior.html">
+<link rel="import" href="./markdown-behavior.html">
+
+<template is="xin-template" for="doc-page">
+  <div id="content"></div>
+</template>
+
+<script>
+(function() {
+  'use strict';
+
+  xin.createComponent({
+    is: 'doc-page',
+
+    behaviors: ['xin.ViewBehavior', 'xinCli.MarkdownBehavior'],
+
+    properties: {
+      metadata: {
+        type: Object,
+        observer: '_fetchDoc',
+      },
+    },
+
+    focusing: function() {
+      this._fetchDoc();
+    },
+
+    _fetchDoc: function() {
+      if (!this.metadata || !this.metadata.name || !this.parameters || !this.parameters.name) {
+        return;
+      }
+
+      var name = this.parameters.name;
+      this.set('markdownUrl', location.origin + '/bower_components/' + this.metadata.name + '/docs/' + name + '.md');
+    },
+  });
+})();
+</script>

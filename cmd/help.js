@@ -1,14 +1,17 @@
-'use strict';
+const Cmd = require('./').Cmd;
 
-module.exports = {
-  run() {
-    console.log('Usage:');
-    console.log('  xin <command>');
-    console.log('');
-    console.log('Commands:');
-    console.log('  init       Initialize new library or application');
-    console.log('  serve      Serve your project to read documentation');
-    console.log('  help       You see it now');
-    return Promise.resolve();
-  },
-};
+class HelpCmd extends Cmd {
+  *run() {
+    console.log(`
+Usage:
+  xin <command>
+
+Commands:
+  init       Initialize new library or application
+  serve      Serve your project to read documentation
+  help       You see it now`
+    );
+  }
+}
+
+module.exports = HelpCmd;

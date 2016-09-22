@@ -23,7 +23,7 @@
       'xin.ViewBehavior': {
         transition: 'none',
       },
-      //debug: true,
+      // debug: true,
     };
   </script>
   <script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
@@ -35,22 +35,25 @@
   <link rel="import" href="/bower_components/xin-cli/xin-cli.html">
 </head>
 <body>
-  <xin-app id="app" mode="history" root-uri="/cdocs">
-  <div class="wrapper">
-    <doc-nav id="docNav"></doc-nav>
-    <xin-pager class="flex">
-      <xin-view uri="/">
-        <div class="doc-content">
-          <h1>Hello,</h1>
+  <xin-app id="app">
+    <template>
+      <div class="wrapper">
+        <doc-nav id="docNav" metadata="{{metadata}}"></doc-nav>
+        <xin-pager class="flex">
+          <xin-view uri="/">
+            <div class="doc-content">
+              <h1>Hello,</h1>
 
-          <p>
-            Here, you can find components documentation.
-          </p>
-        </div>
-      </xin-view>
-      <doc-show id="docShow" uri="/{name}"></doc-show>
-    </xin-pager>
-  </div>
+              <p>
+                Here, you can find components documentation.
+              </p>
+            </div>
+          </xin-view>
+          <doc-page id="docPage" uri="/pages/{name}" metadata="{{metadata}}"></doc-page>
+          <doc-show id="docShow" uri="/modules/{name}" metadata="{{metadata}}"></doc-show>
+        </xin-pager>
+      </div>
+    </template>
   </xin-app>
 </body>
 </html>

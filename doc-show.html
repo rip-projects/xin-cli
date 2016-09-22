@@ -1,97 +1,50 @@
 <link rel="import" href="../xin/view-behavior.html">
-
-<script src="./js/marked.js"></script>
-<script src="./js/prism.min.js"></script>
-
-<link rel="stylesheet" href="./css/prism.min.css">
-
-<style>
-doc-show #content {
-  box-sizing: border-box;
-  padding: 5px;
-}
-
-doc-show table,
-doc-show .block {
-  width: 100%;
-  background-color: #eeeeee;
-  padding: 10px;
-  margin-bottom: 8px;
-  box-sizing: border-box;
-}
-
-doc-show table *,
-doc-show .block * {
-  font-size: 13px;
-}
-
-doc-show table th,
-doc-show .block .header {
-  font-size: .8em;
-  font-weight: bold;
-}
-
-doc-show table .type,
-doc-show .block .type {
-  color: #66D9EF;
-}
-
-doc-show table .visibility,
-doc-show .block .visibility {
-  color: #529B2F;
-}
-
-doc-show table .identifier,
-doc-show .block .identifier {
-  color: #F92672;
-}
-
-doc-show pre {
-  background-color: #eee;
-  padding: 20px;
-  overflow: auto;
-}
-</style>
+<link rel="import" href="./markdown-behavior.html">
 
 <template is="xin-template" for="doc-show">
   <div id="content"></div>
 </template>
 
 <script>
+/* eslint no-eval: 0 */
 (function() {
   'use strict';
-
-  marked.setOptions({
-    highlight: function (code, language) {
-      //console.log(code, language);
-      return Prism.highlight(code, Prism.languages[language]);
-    }
-  });
 
   xin.createComponent({
     is: 'doc-show',
 
-    behaviors: ['xin.ViewBehavior'],
+    behaviors: ['xin.ViewBehavior', 'xinCli.MarkdownBehavior'],
+
+    properties: {
+      metadata: {
+        type: Object,
+        observer: '_fetchDoc',
+      },
+    },
 
     focusing: function() {
-      if (!docNav.name || !this.parameters || !this.parameters.name) {
+      this._fetchDoc();
+    },
+
+    _fetchDoc: function() {
+      if (!this.metadata || !this.metadata.name || !this.parameters || !this.parameters.name) {
         return;
       }
 
       var name = this.parameters.name;
 
-      Populator.fetch(name).then(function(populator) {
-        this.renderDoc(populator);
+      Populator.fetch(this.metadata.name, name).then(function(populator) {
+        this._renderDoc(populator);
       }.bind(this));
     },
 
-    renderDoc: function(doc) {
+    _renderDoc: function(doc) {
       var md = '# ' + doc.filename + '\n\n';
 
       if (typeof doc.imports === 'object' && Object.keys(doc.imports).length) {
         md += '### Imports\n\n';
         Object.keys(doc.imports).forEach(function(importName) {
-          //var imp = doc.imports[importName];
+          // var imp = doc.imports[importName];
           md += '> ' + importName + '<br>\n';
         });
         md += '\n';
@@ -145,7 +98,7 @@ doc-show pre {
         md += appendDemos(library.demo);
       });
 
-      this.$.content.innerHTML = marked(md);
+      this.set('markdown', md);
     },
   });
 
@@ -166,7 +119,7 @@ doc-show pre {
       var privateMethods = [];
       var publicMethods = [];
 
-      for(var i in methods) {
+      for (var i in methods) {
         if (i[0] === '_') {
           privateMethods.push(methods[i]);
         } else {
@@ -196,7 +149,7 @@ doc-show pre {
     if (Object.keys(properties).length) {
       md += '#### Properties\n\n';
       md += 'Name|Type|Value\n---|---|---\n';
-      for(var i in properties) {
+      for (var i in properties) {
         var prop = properties[i];
         md += '<span class="identifier">' + i + '</span> | <span class="type">' + prop.type.name + '</span> | ' + JSON.stringify(prop.value) + '\n';
       }
@@ -205,10 +158,11 @@ doc-show pre {
     return md;
   }
 
-  function Populator(name) {
+  function Populator(unit, name) {
+    this.unit = unit;
     this.name = name;
     this.filename = name + '.html';
-    this.baseUrl = location.origin + '/bower_components/' + docNav.name + '/' + name + '.html';
+    this.baseUrl = location.origin + '/bower_components/' + unit + '/' + name + '.html';
     this.dom = null;
     this.imports = {};
     this.components = {};
@@ -216,19 +170,21 @@ doc-show pre {
     this.libraries = {};
   };
 
-  //Populator.requestor = document.createElement('xin-ajax');
+  // Populator.requestor = document.createElement('xin-ajax');
   Populator.cache = {};
   Populator.request = function(options) {
     if (!Populator.requestor) {
       Populator.requestor = document.createElement('xin-ajax');
     }
+
     return Populator.requestor.request(options);
   };
-  Populator.fetch = function(name) {
-    if (Populator.cache[name]) {
-      return Promise.resolve(Populator.cache[name]);
+  Populator.fetch = function(unit, name) {
+    var cacheId = unit + ':' + name;
+    if (Populator.cache[cacheId]) {
+      return Promise.resolve(Populator.cache[cacheId]);
     } else {
-      return (Populator.cache[name] = new Populator(name)).fetch();
+      return (Populator.cache[cacheId] = new Populator(unit, name)).fetch();
     }
   };
 
@@ -259,23 +215,24 @@ doc-show pre {
 
           if (willParse) {
             var compData;
+            var name;
 
             nodeContent.split('\n').forEach(function(line) {
               if (line.trim().startsWith('@')) {
                 var matches = line.trim().match(/^@([a-zA-Z]+)\s+(.*)$/);
                 switch (matches[1]) {
                   case 'component':
-                    var name = matches[2];
+                    name = matches[2];
                     compData = self.components[name] =
                       self.components[name] || new PComponent(name);
                     break;
                   case 'behavior':
-                    var name = matches[2];
+                    name = matches[2];
                     compData = self.behaviors[name] =
                       self.behaviors[name] || new PBehavior(name);
                     break;
                   case 'library':
-                    var name = matches[2];
+                    name = matches[2];
                     compData = self.libraries[name] =
                       self.libraries[name] || new PLibrary(name);
                     break;
@@ -347,22 +304,21 @@ doc-show pre {
       });
 
       return promise.then(function() {
-          window.xin = originalXin;
-          window.document.registerElement = originalRegisterElement;
-        });
+        window.xin = originalXin;
+        window.document.registerElement = originalRegisterElement;
+      });
     },
 
     populateFromScript: function(content) {
-      var self = this;
+      // var self = this;
       (function() {
         try {
           eval(content);
-        } catch(e) {
+        } catch (e) {
           console.warn('Content:\n' + content.trim());
           console.error(e.stack);
         }
-      }.bind(window))();
-
+      })();
     },
   };
 
@@ -378,13 +334,14 @@ doc-show pre {
       if (typeof behavior === 'string') {
         this.extends.push(behavior);
       } else {
+        var i;
         var properties = populateProperties(behavior);
-        for(var i in properties) {
+        for (i in properties) {
           this.properties[i] = properties[i];
         }
 
         var methods = populateMethods(behavior);
-        for(var i in methods) {
+        for (i in methods) {
           this.methods[i] = methods[i];
         }
       }
@@ -406,14 +363,14 @@ doc-show pre {
         result.push(behavior);
       }
       return result;
-    }
+    },
   };
 
   function populateProperties(options) {
     if (!options || !options.properties) return {};
 
     var result = {};
-    for(var i in options.properties) {
+    for (var i in options.properties) {
       var prop = result[i] = {
         name: i,
       };
@@ -440,7 +397,7 @@ doc-show pre {
 
   function populateMethods(options) {
     var result = {};
-    for(var i in options) {
+    for (var i in options) {
       if (typeof options[i] !== 'function' || i === 'created' || i === 'ready' || i === 'attached') {
         continue;
       }
