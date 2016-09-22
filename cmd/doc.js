@@ -31,6 +31,20 @@ class DocCmd extends Cmd {
 
     yield fs.copy(WWW_DIR, this.output, {clobber: true});
     yield fs.copy(path.join(this.input, 'bower_components'), path.join(this.output, 'bower_components'), {clobber: true});
+
+    // copy xin-cli from running xin-cli location
+    yield fs.copy(path.join(__dirname, '..'), path.join(this.output, 'bower_components/xin-cli'), {
+      clobber: true,
+      filter: function(file) {
+        if (file.indexOf('/bower_components') >= 0 ||
+        file.indexOf('/node_modules') >= 0 ||
+        file.indexOf('/.') >= 0) {
+          return false;
+        }
+
+        return true;
+      },
+    });
     yield fs.copy(path.join(this.input), path.join(this.output, 'bower_components', metadata.name), {
       clobber: true,
       filter: function(file) {
