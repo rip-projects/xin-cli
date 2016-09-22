@@ -7650,7 +7650,7 @@ pre[class*="language-"] {background:#f5f2f0}:not(pre) > code[class*="language-"]
       }
 
       var name = this.parameters.name;
-      this.set('markdownUrl', location.origin + '/bower_components/' + this.metadata.name + '/docs/' + name + '.md');
+      this.set('markdownUrl', location.origin + location.pathname + '/bower_components/' + this.metadata.name + '/docs/' + name + '.md');
     },
   });
 })();
@@ -7816,7 +7816,7 @@ pre[class*="language-"] {background:#f5f2f0}:not(pre) > code[class*="language-"]
     this.unit = unit;
     this.name = name;
     this.filename = name + '.html';
-    this.baseUrl = location.origin + '/bower_components/' + unit + '/' + name + '.html';
+    this.baseUrl = location.origin + location.pathname + '/bower_components/' + unit + '/' + name + '.html';
     this.dom = null;
     this.imports = {};
     this.components = {};
