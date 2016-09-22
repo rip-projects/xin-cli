@@ -5778,8 +5778,12 @@ xin-pager .xin-view-behavior {
     attached: function() {
       this.__app.addEventListener('navigated', function() {
         this.async(function() {
+          var href = location.href;
+          if (location.hash === '') {
+            href += '#!/';
+          }
           xin.dom(this).querySelectorAll('a:not(.toggle-btn)').forEach(function(el) {
-            if (el.href === location.href) {
+            if (el.href === href) {
               el.classList.add('selected');
             } else {
               el.classList.remove('selected');
@@ -7570,6 +7574,10 @@ pre[class*="language-"] {background:#f5f2f0}:not(pre) > code[class*="language-"]
 
     <table>
       <tbody><tr>
+        <td>Version</td>
+        <td>[[metadata.version]]</td>
+      </tr>
+      <tr>
         <td>License</td>
         <td>[[metadata.license]]</td>
       </tr>

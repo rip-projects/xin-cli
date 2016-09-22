@@ -1,5 +1,6 @@
 {
   "name": "xin-cli",
+  "version": "0.2.0",
   "description": "CLI for xin (version 2) development",
   "authors": [
     "Ganesha <reekoheek@gmail.com>"

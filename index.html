@@ -2,9 +2,157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+  <style>
+  html, body {
+    height: 100%;
+  }
+
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+    color: #fff;
+    background-color: #111;
+    display: flex;
+    padding: 0;
+    margin: 0;
+  }
+
+  h1, h5 {
+    font-weight: 300;
+  }
+
+  h1 {
+    font-family: monospace;
+    font-weight: bold;
+    position: absolute;
+    color: #1e1;
+    bottom: 10px;
+    right: 10px;
+    padding: 0;
+    margin: 0;
+    bottom: 30%;
+    right: 15%;
+    font-size: 4rem;
+    text-shadow: 0 0 30px rgba(20, 20, 20, 1);
+    opacity: 0;
+    transition: opacity 2s;
+    -webkit-transition: opacity 2s;
+    -moz-transition: opacity 2s;
+  }
+
+  h5 {
+    text-shadow: 0px 0px 15px rgba(20, 20, 20, 1);
+    color: #eee;
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 2s;
+    -webkit-transition: opacity 2s;
+    -moz-transition: opacity 2s;
+  }
+
+  img {
+    /*max-width: 70%;*/
+  }
+
+  .bg {
+    background: no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url(https://upload.wikimedia.org/wikipedia/commons/8/85/SCBD,_Jakarta.jpg);
+    opacity: 0;
+    transition: opacity 2s;
+    -webkit-transition: opacity 2s;
+    -moz-transition: opacity 2s;
+  }
+
+  .overlay {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, .45);
+  }
+
+  .center {
+    text-align: center;
+  }
+
+  .img-placeholder {
+    display: inline-block;
+    width: auto;
+    position: relative;
+  }
+
+  .big-button {
+    border: 2px solid white;
+    border-radius: 30px;
+    padding: 15px;
+    text-decoration: none;
+    color: white;
+    text-transform: uppercase;
+    text-shadow: 0px 0px 15px rgba(20, 20, 20, 1);
+    /*background-color: rgba(255, 255, 255, 0.2);*/
+    opacity: 0;
+    transition: opacity 2s;
+    -webkit-transition: opacity 2s;
+    -moz-transition: opacity 2s;
+  }
+
+  body.jakarta .bg,
+  body.jakarta h1,
+  body.jakarta h5,
+  body.jakarta .big-button {
+    opacity: 1;
+  }
+  </style>
+  <title>xin-cli</title>
+
+  <script>
+  (function() {
+    'use strict';
+
+    var src = 'https://upload.wikimedia.org/wikipedia/commons/8/85/SCBD,_Jakarta.jpg';
+    var img = document.createElement('img');
+    img.addEventListener('load', function() {
+      document.querySelector('body').classList.add('jakarta');
+    });
+    img.src = src;
+  })();
+  </script>
 </head>
 <body>
-  Hello world
+  <div class="bg"></div>
+  <div class="overlay">
+    <div class="center">
+      <h5>From Jakarta With Love</h5>
+
+      <div class="img-placeholder">
+        <img src="./img/xin.png">
+        <h1>cli</h1>
+      </div>
+
+      <br>
+      <br>
+      <br>
+      <br>
+
+      <a href="./docs/next/" class="big-button">Learn More</a>
+    </div>
+  </div>
 </body>
 </html>

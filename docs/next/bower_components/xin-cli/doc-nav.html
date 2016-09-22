@@ -151,8 +151,12 @@ doc-nav a.toggle-btn {
     attached: function() {
       this.__app.addEventListener('navigated', function() {
         this.async(function() {
+          var href = location.href;
+          if (location.hash === '') {
+            href += '#!/';
+          }
           xin.dom(this).querySelectorAll('a:not(.toggle-btn)').forEach(function(el) {
-            if (el.href === location.href) {
+            if (el.href === href) {
               el.classList.add('selected');
             } else {
               el.classList.remove('selected');
