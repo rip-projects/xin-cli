@@ -25,7 +25,7 @@
   "scripts": {
     "test": "eslint --ext .js,.html .",
     "dev": "node bin/xin.js",
-    "watch": "nodemon -i _docs bin/xin.js",
+    "watch": "nodemon -e 'js,json,html,md,css' -i _docs bin/xin.js",
     "postinstall": "bower install"
   },
   "bin": {

@@ -28,6 +28,7 @@
   </script>
   <script src="/bower_components/webcomponentsjs/webcomponents-lite.js"></script>
 
+  <link rel="import" href="/bower_components/xin/xin-layout.html">
   <link rel="import" href="/bower_components/xin/xin-app.html">
   <link rel="import" href="/bower_components/xin/xin-pager.html">
   <link rel="import" href="/bower_components/xin/xin-view.html">
@@ -40,17 +41,9 @@
       <div class="wrapper">
         <doc-nav id="docNav" metadata="{{metadata}}"></doc-nav>
         <xin-pager class="flex">
-          <xin-view uri="/">
-            <div class="doc-content">
-              <h1>Hello,</h1>
-
-              <p>
-                Here, you can find components documentation.
-              </p>
-            </div>
-          </xin-view>
-          <doc-page id="docPage" uri="/pages/{name}" metadata="{{metadata}}"></doc-page>
-          <doc-show id="docShow" uri="/modules/{name}" metadata="{{metadata}}"></doc-show>
+          <doc-home uri="/" metadata="{{metadata}}"></doc-home>
+          <doc-page uri="/pages/{name}" metadata="{{metadata}}"></doc-page>
+          <doc-show uri="/modules/{name}" metadata="{{metadata}}"></doc-show>
         </xin-pager>
       </div>
     </template>

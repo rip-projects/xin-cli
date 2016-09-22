@@ -3,13 +3,16 @@
 <style>
 doc-nav {
   display: block;
-  width: 150px;
+  width: 200px;
+  background-color: #eee;
+  overflow: auto;
 }
 
 doc-nav .menu {
   margin: 10px 0;
   overflow: auto;
   height: 100%;
+  padding: 10px;
 }
 
 doc-nav a {
@@ -23,7 +26,8 @@ doc-nav .children a {
   padding-left: 1em;
 }
 
-doc-nav a:hover {
+doc-nav a:hover,
+doc-nav .selected {
   background-color: #ffa;
 }
 
@@ -142,6 +146,20 @@ doc-nav a.toggle-btn {
         type: Object,
         notify: true,
       },
+    },
+
+    attached: function() {
+      this.__app.addEventListener('navigated', function() {
+        this.async(function() {
+          xin.dom(this).querySelectorAll('a:not(.toggle-btn)').forEach(function(el) {
+            if (el.href === location.href) {
+              el.classList.add('selected');
+            } else {
+              el.classList.remove('selected');
+            }
+          });
+        }, 300);
+      }.bind(this));
     },
 
     _computeModuleUrl: function(module) {

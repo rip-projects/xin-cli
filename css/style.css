@@ -30,6 +30,7 @@ p {
 a {
   color: #4F8EF7;
   text-decoration: none;
+  font-weight: 300;
 }
 
 table {
@@ -53,7 +54,8 @@ blockquote {
 }
 
 .wrapper xin-pager {
-  overflow: visible;
+  /*overflow: visible;*/
+  overflow: auto;
   flex: 1;
 }
 
@@ -63,3 +65,7 @@ blockquote {
   padding: 5px;
 }
 
+#content {
+  box-sizing: border-box;
+  padding: 5px;
+}
