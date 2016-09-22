@@ -2,6 +2,8 @@ const Cmd = require('./').Cmd;
 const fetchMetadata = require('./').fetchMetadata;
 const fs = require('fs-promise');
 const path = require('path');
+const Vulcan = require('vulcanize');
+const Promise = require('bluebird');
 
 const WWW_DIR = path.join(__dirname, '../www');
 
@@ -39,8 +41,19 @@ class DocCmd extends Cmd {
         return true;
       },
     });
-
     yield fs.writeFile(path.join(this.output, 'metadata.json'), JSON.stringify(metadata, null, 2));
+
+    let args = {
+      abspath: this.output,
+      inlineScripts: true,
+      inlineCss: true,
+    };
+    let target = 'index-unvulcanized.html';
+    let vulcan = new Vulcan(args);
+    let content = yield Promise.promisify(vulcan.process, { context: vulcan })(target);
+    yield fs.writeFile(path.join(this.output, 'index.html'), content);
+
+    yield fs.remove(path.join(this.output, target));
   }
 }
 

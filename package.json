@@ -12,7 +12,8 @@
     "koa-static": "^2.0.0",
     "minimist": "^1.2.0",
     "portfinder": "^1.0.7",
-    "sprintf-js": "^1.0.3"
+    "sprintf-js": "^1.0.3",
+    "vulcanize": "^1.14.8"
   },
   "devDependencies": {
     "eslint": "^3.5.0",
@@ -23,6 +24,7 @@
   },
   "scripts": {
     "test": "eslint --ext .js,.html .",
+    "dev": "node bin/xin.js",
     "watch": "nodemon -i _docs bin/xin.js",
     "postinstall": "bower install"
   },
