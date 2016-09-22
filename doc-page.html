@@ -31,7 +31,7 @@
       }
 
       var name = this.parameters.name;
-      this.set('markdownUrl', location.origin + '/bower_components/' + this.metadata.name + '/docs/' + name + '.md');
+      this.set('markdownUrl', location.origin + location.pathname + '/bower_components/' + this.metadata.name + '/docs/' + name + '.md');
     },
   });
 })();

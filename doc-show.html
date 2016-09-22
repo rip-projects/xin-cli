@@ -162,7 +162,7 @@
     this.unit = unit;
     this.name = name;
     this.filename = name + '.html';
-    this.baseUrl = location.origin + '/bower_components/' + unit + '/' + name + '.html';
+    this.baseUrl = location.origin + location.pathname + '/bower_components/' + unit + '/' + name + '.html';
     this.dom = null;
     this.imports = {};
     this.components = {};

@@ -1,11 +1,12 @@
 {
   "name": "xin-cli",
+  "version": "0.2.0",
   "description": "CLI for xin (version 2) development",
   "authors": [
     "Ganesha <reekoheek@gmail.com>"
   ],
   "license": "MIT",
-  "homepage": "https://xin-cli.xinix-technology.github.io",
+  "homepage": "https://xinix-technology.github.io/xin-cli",
   "ignore": [
     "**/.*",
     "node_modules",
