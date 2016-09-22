@@ -1,6 +1,6 @@
 {
   "name": "xin-cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "CLI for xin (version 2) development",
   "main": "serve.js",
   "dependencies": {
