@@ -5,7 +5,7 @@
     "Ganesha <reekoheek@gmail.com>"
   ],
   "license": "MIT",
-  "homepage": "https://xin-cli.xinix-technology.github.io",
+  "homepage": "https://xinix-technology.github.io/xin-cli",
   "ignore": [
     "**/.*",
     "node_modules",
