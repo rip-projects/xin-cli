@@ -57,6 +57,7 @@ class DocCmd extends Cmd {
         return true;
       },
     });
+    yield fs.copy(path.join(this.input, 'demo'), path.join(this.output, 'demo'), { clobber: true });
     yield fs.writeFile(path.join(this.output, 'metadata.json'), JSON.stringify(metadata, null, 2));
 
     let args = {

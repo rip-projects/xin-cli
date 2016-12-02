@@ -6,9 +6,11 @@
 </template>
 
 <script>
-/* eslint no-eval: 0 */
+/* eslint no-eval: 0, no-new-func: 0 */
 (function() {
   'use strict';
+
+  const Prism = window.Prism;
 
   xin.createComponent({
     is: 'doc-show',
@@ -40,6 +42,10 @@
 
     _renderDoc: function(doc) {
       var md = '# ' + doc.filename + '\n\n';
+
+      if (doc.description) {
+        md += doc.description + '\n\n';
+      }
 
       if (typeof doc.imports === 'object' && Object.keys(doc.imports).length) {
         md += '### Imports\n\n';
@@ -151,7 +157,7 @@
       md += 'Name|Type|Value\n---|---|---\n';
       for (var i in properties) {
         var prop = properties[i];
-        md += '<span class="identifier">' + i + '</span> | <span class="type">' + prop.type.name + '</span> | ' + JSON.stringify(prop.value) + '\n';
+        md += '<span class="identifier">' + i + '</span> | <span class="type">' + prop.type.name + '</span> | ' + Prism.highlight(JSON.stringify(prop.value), Prism.languages.json) + '\n';
       }
       md += '\n\n';
     }
@@ -162,6 +168,7 @@
     this.unit = unit;
     this.name = name;
     this.filename = name + '.html';
+    this.description = '';
     this.baseUrl = location.origin + location.pathname + '/bower_components/' + unit + '/' + name + '.html';
     this.dom = null;
     this.imports = {};
@@ -210,10 +217,12 @@
         if (node.nodeType === Node.COMMENT_NODE) {
           var nodeContent = node.textContent.trim();
           var willParse = (nodeContent.startsWith('@component') ||
-              nodeContent.startsWith('@library') ||
-              nodeContent.startsWith('@behavior'));
+            nodeContent.startsWith('@library') ||
+            nodeContent.startsWith('@behavior'));
 
-          if (willParse) {
+          if (nodeContent.startsWith('@description')) {
+            this.description += '\n\n' + nodeContent.split('@description')[1].trim();
+          } else if (willParse) {
             var compData;
             var name;
 
@@ -223,18 +232,15 @@
                 switch (matches[1]) {
                   case 'component':
                     name = matches[2];
-                    compData = self.components[name] =
-                      self.components[name] || new PComponent(name);
+                    compData = self.components[name] = self.components[name] || new PComponent(name);
                     break;
                   case 'behavior':
                     name = matches[2];
-                    compData = self.behaviors[name] =
-                      self.behaviors[name] || new PBehavior(name);
+                    compData = self.behaviors[name] = self.behaviors[name] || new PBehavior(name);
                     break;
                   case 'library':
                     name = matches[2];
-                    compData = self.libraries[name] =
-                      self.libraries[name] || new PLibrary(name);
+                    compData = self.libraries[name] = self.libraries[name] || new PLibrary(name);
                     break;
                   case 'demo':
                     if (compData) {
@@ -311,14 +317,17 @@
 
     populateFromScript: function(content) {
       // var self = this;
-      (function() {
-        try {
-          eval(content);
-        } catch (e) {
-          console.warn('Content:\n' + content.trim());
-          console.error(e.stack);
-        }
-      })();
+      try {
+        var fn = new Function(content);
+        fn.call(window);
+
+        // (function() {
+        //   eval(content);
+        // })();
+      } catch (e) {
+        console.warn('Content:\n' + content.trim());
+        console.error(e.stack);
+      }
     },
   };
 

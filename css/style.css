@@ -27,6 +27,14 @@ p {
   margin: 0 0 10px;
 }
 
+code {
+  background-color: #eee;
+  padding: 2px 5px;
+  border-radius: 10px;
+  font-size: .9em;
+  color: #555;
+}
+
 a {
   color: #4F8EF7;
   text-decoration: none;

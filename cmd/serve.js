@@ -28,7 +28,8 @@ class ServeCmd extends Cmd {
           ws: true,
         },
       });
-      bs.watch('**/*.html', {ignored: '_docs'}).on('change', function(file) {
+
+      bs.watch(['**/*.html', '**/*.js'], {ignored: '_docs'}).on('change', function(file) {
         updateDoc().then(() => bs.reload.apply(bs, arguments));
       });
 
